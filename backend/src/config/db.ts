@@ -12,3 +12,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 export default prisma;
+
+prisma.$connect()
+  .then(() => console.log('✅ MongoDB connected successfully'))
+  .catch((err) => console.error('MongoDB connection error:', err));

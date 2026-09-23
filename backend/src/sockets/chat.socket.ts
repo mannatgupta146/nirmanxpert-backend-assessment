@@ -5,7 +5,7 @@ import { sendMessageSchema, deleteMessageSchema, editMessageSchema } from '../ut
 import prisma from '../config/db';
 
 // In-memory presence tracker (for demo purposes)
-const onlineUsers = new Map<string, string>(); // socketId -> userId
+const onlineUsers = new Map<string, number>(); // userId -> count of active sockets
 
 export const setupChatSockets = (io: Server) => {
   io.on('connection', (socket: AuthenticatedSocket) => {
@@ -14,9 +14,17 @@ export const setupChatSockets = (io: Server) => {
 
     console.log(`User connected to socket: ${userId} (${socket.id})`);
     
-    // Mark as online
-    onlineUsers.set(socket.id, userId);
-    io.emit('presence_update', { userId, status: 'online' });
+    // Mark as online and track connection count
+    const currentCount = onlineUsers.get(userId) || 0;
+    onlineUsers.set(userId, currentCount + 1);
+    
+    // Only emit if this is their first connection
+    if (currentCount === 0) {
+      io.emit('presence_update', { userId, status: 'online' });
+    }
+
+    // Give the new socket the current online users list
+    socket.emit('initial_presence', Array.from(onlineUsers.keys()));
 
     // Join a specific channel room
     socket.on('join_channel', async (channelId: string) => {
@@ -101,12 +109,23 @@ export const setupChatSockets = (io: Server) => {
     });
 
     // Typing Indicators
-    socket.on('typing', (channelId: string) => {
-      socket.to(channelId).emit('user_typing', { userId, channelId });
+    socket.on('typing', async (channelId: string) => {
+      const membership = await prisma.channelMember.findUnique({
+        where: { userId_channelId: { userId, channelId } },
+        include: { user: true }
+      });
+      if (membership) {
+        socket.to(channelId).emit('user_typing', { userId, channelId, email: membership.user.email });
+      }
     });
 
-    socket.on('stop_typing', (channelId: string) => {
-      socket.to(channelId).emit('user_stopped_typing', { userId, channelId });
+    socket.on('stop_typing', async (channelId: string) => {
+      const membership = await prisma.channelMember.findUnique({
+        where: { userId_channelId: { userId, channelId } }
+      });
+      if (membership) {
+        socket.to(channelId).emit('user_stopped_typing', { userId, channelId });
+      }
     });
 
     // Moderation (Delete Message)
@@ -196,10 +215,14 @@ export const setupChatSockets = (io: Server) => {
     // Handle disconnect
     socket.on('disconnect', () => {
       console.log(`User disconnected: ${userId} (${socket.id})`);
-      onlineUsers.delete(socket.id);
       
-      // We could wait or check if they have other active sockets before marking completely offline
-      io.emit('presence_update', { userId, status: 'offline' });
+      const count = onlineUsers.get(userId) || 0;
+      if (count <= 1) {
+        onlineUsers.delete(userId);
+        io.emit('presence_update', { userId, status: 'offline' });
+      } else {
+        onlineUsers.set(userId, count - 1);
+      }
     });
   });
 };

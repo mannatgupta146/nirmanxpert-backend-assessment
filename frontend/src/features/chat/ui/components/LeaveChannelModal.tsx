@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { useAdmin } from '../../../admin/hooks/useAdmin';
 import { useAuth } from '../../../auth/hooks/useAuth';
 

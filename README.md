@@ -57,6 +57,9 @@ The React frontend strictly adheres to a scalable 4-layer structure inside `src/
 3. **Layer 3 (State/Context)**: React Context providers containing globally shared tokens.
 4. **Layer 4 (UI)**: Pure presentational components receiving strictly props and handlers from hooks.
 
+### Architectural Limitations
+> **Presence Tracking**: Presence tracking currently uses an in-memory connection counter and is intended for a single backend instance. A shared Redis-based presence mechanism would be required for horizontally scaled deployments to ensure accurate presence across multiple pods.
+
 ---
 
 ## 🛠️ Setup Instructions

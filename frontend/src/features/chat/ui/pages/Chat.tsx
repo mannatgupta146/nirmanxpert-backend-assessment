@@ -50,7 +50,9 @@ export default function Chat() {
     handleRenameChannel,
     handleJoinChannel,
     handleLeaveChannel,
-    editMessage
+    editMessage,
+    onlineUsers,
+    typingUsers
   } = useChat();
 
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
@@ -381,15 +383,18 @@ export default function Chat() {
                     <div key={msg.id} className={clsx("flex flex-col max-w-[85%] group", isMe ? "self-end items-end" : "self-start items-start")}>
 
                       {showAvatar && (
-                        <div className="flex items-baseline gap-1.5 mb-1.5 px-1">
-                          <span className="text-sm font-bold text-gray-900">
+                        <div className="flex items-center gap-1.5 mb-1.5 px-1">
+                          {!isMe && (
+                            <span className={clsx("w-1.5 h-1.5 rounded-full shrink-0", onlineUsers.has(msg.senderId) ? "bg-emerald-500 shadow-sm shadow-emerald-500/20" : "bg-gray-300")} title={onlineUsers.has(msg.senderId) ? "Online" : "Offline"} />
+                          )}
+                          <span className="text-sm font-bold text-gray-900 leading-none">
                             {isMe ? 'You' : msg.sender.email.split('@')[0]}
                           </span>
                           {msg.sender.role === 'ADMIN' && (
-                            <span className="relative -top-2 text-[8px] font-semibold uppercase tracking-wider text-gray-400">admin</span>
+                            <span className="relative -top-1.5 text-[8px] font-bold uppercase tracking-wider text-gray-400 leading-none">admin</span>
                           )}
                           {msg.sender.role === 'MODERATOR' && (
-                            <span className="relative -top-2 text-[8px] font-semibold uppercase tracking-wider text-gray-400">mod</span>
+                            <span className="relative -top-1.5 text-[8px] font-bold uppercase tracking-wider text-gray-400 leading-none">mod</span>
                           )}
                         </div>
                       )}
@@ -492,11 +497,21 @@ export default function Chat() {
               </div>
 
               {/* Input Area */}
-              <div className="p-4 sm:p-6 bg-white border-t border-gray-200 shrink-0">
+              <div className="p-4 sm:p-6 bg-white border-t border-gray-200 shrink-0 relative">
 
                 {rateLimitError && (
                   <div className="text-red-600 text-sm mb-3 flex items-center gap-2 px-2 font-medium bg-red-50 p-2 rounded-lg border border-red-100 animate-in fade-in slide-in-from-bottom-2">
                     <ShieldAlert className="w-4 h-4" /> {rateLimitError}
+                  </div>
+                )}
+                
+                {typingUsers.size > 0 && (
+                  <div className="absolute -top-6 left-6 text-[11px] text-gray-500 font-medium px-2 py-0.5 italic animate-pulse bg-white/80 backdrop-blur-sm rounded-t-lg">
+                    {typingUsers.size === 1 
+                      ? <><strong className="font-bold text-gray-700">{Array.from(typingUsers.values())[0]}</strong> is typing...</>
+                      : typingUsers.size === 2 
+                        ? <><strong className="font-bold text-gray-700">{Array.from(typingUsers.values()).join(' and ')}</strong> are typing...</>
+                        : 'Multiple people are typing...'}
                   </div>
                 )}
 

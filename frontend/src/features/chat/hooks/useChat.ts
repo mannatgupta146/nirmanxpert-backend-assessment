@@ -14,6 +14,9 @@ export const useChat = () => {
   const [joinedChannelIds, setJoinedChannelIds] = useState<Set<string>>(new Set());
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  const [typingUsersMap, setTypingUsersMap] = useState<Map<string, string>>(new Map());
+  
   const [input, setInput] = useState('');
   
   const socketRef = useRef<any>(null);
@@ -59,6 +62,39 @@ export const useChat = () => {
       ));
     });
 
+    socket.on('initial_presence', (userIds: string[]) => {
+      setOnlineUsers(new Set(userIds));
+    });
+
+    socket.on('presence_update', ({ userId, status }: { userId: string, status: 'online' | 'offline' }) => {
+      setOnlineUsers(prev => {
+        const next = new Set(prev);
+        if (status === 'online') next.add(userId);
+        else next.delete(userId);
+        return next;
+      });
+    });
+
+    socket.on('user_typing', ({ userId, channelId, email }: any) => {
+      if (channelId === activeChannelRef.current && email) {
+        setTypingUsersMap(prev => {
+          const next = new Map(prev);
+          next.set(userId, email.split('@')[0]);
+          return next;
+        });
+      }
+    });
+
+    socket.on('user_stopped_typing', ({ userId, channelId }: any) => {
+      if (channelId === activeChannelRef.current) {
+        setTypingUsersMap(prev => {
+          const next = new Map(prev);
+          next.delete(userId);
+          return next;
+        });
+      }
+    });
+
     socket.on('message_edited', ({ messageId, content }: any) => {
       setMessages(prev => prev.map(m => 
         m.id === messageId ? { ...m, isEdited: true, content: content } : m
@@ -86,12 +122,14 @@ export const useChat = () => {
       .then(data => {
         setMessages(data.reverse());
         setIsMember(true);
+        setTypingUsersMap(new Map()); // Reset typing on channel switch
         socketRef.current.emit('join_channel', activeChannel);
       })
       .catch(err => {
         if (err.response?.status === 403 || err.response?.status === 404) {
           setIsMember(false);
           setMessages([]);
+          setTypingUsersMap(new Map());
         }
       });
     
@@ -241,6 +279,8 @@ export const useChat = () => {
     handleRenameChannel,
     handleJoinChannel,
     handleLeaveChannel,
-    editMessage
+    editMessage,
+    onlineUsers,
+    typingUsers: typingUsersMap
   };
 };
