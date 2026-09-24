@@ -4,7 +4,7 @@ import { useLogout } from '../../../auth/hooks/useLogout';
 import { useChat } from '../../hooks/useChat';
 import ManageUsersModal from '../../../admin/ui/components/ManageUsersModal';
 import LeaveChannelModal from '../components/LeaveChannelModal';
-import { LogOut, Hash, Send, Trash2, ShieldAlert, Settings, Plus, X, LogIn, LogOut as LeaveIcon, Pencil, Users, Search, MoreHorizontal, ChevronLeft, Lock, Unlock } from 'lucide-react';
+import { LogOut, Hash, Send, Trash2, ShieldAlert, Settings, Plus, X, LogIn, LogOut as LeaveIcon, Pencil, Users, UserPlus, Search, MoreHorizontal, ChevronLeft, Lock, Unlock } from 'lucide-react';
 import clsx from 'clsx';
 
 function CreateChannelModal({ isOpen, onClose, onCreate }: { isOpen: boolean, onClose: () => void, onCreate: (name: string, isPublic: boolean) => void }) {
@@ -158,7 +158,7 @@ export default function Chat() {
                     <button
                       onClick={() => setActiveChannel(ch.id)}
                       className={clsx(
-                        "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all text-left text-sm font-medium pr-8",
+                        "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all text-left text-sm font-medium pr-24 md:pr-8",
                         activeChannel === ch.id
                           ? "bg-blue-600 text-white shadow-sm"
                           : "text-gray-600 hover:bg-gray-200/50 hover:text-gray-900"
@@ -169,81 +169,120 @@ export default function Chat() {
                     </button>
 
                     {user?.role === 'ADMIN' && (
-                      <div className="absolute right-1 top-1/2 -translate-y-1/2 z-10">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setOpenChannelMenuId(openChannelMenuId === ch.id ? null : ch.id); }}
-                          className={clsx(
-                            "p-1 rounded transition-all",
-                            openChannelMenuId === ch.id ? "opacity-100" : "opacity-100 md:opacity-0 md:group-hover:opacity-100",
-                            activeChannel === ch.id
-                              ? "text-blue-100 hover:bg-blue-500"
-                              : "text-gray-500 hover:bg-gray-200 hover:text-gray-800"
-                          )}
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
+                      <>
+                        {/* Mobile Inline Actions */}
+                        <div className="absolute right-1 top-1/2 -translate-y-1/2 z-10 flex items-center md:hidden gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveChannel(ch.id);
+                              setChannelNameInput(ch.name);
+                              setIsEditingChannelName(true);
+                            }}
+                            className={clsx("p-1.5 rounded-md", activeChannel === ch.id ? "text-blue-100 hover:bg-blue-500" : "text-gray-400 hover:text-blue-600 hover:bg-gray-100")}
+                            title="Rename"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdatePrivacy(ch.id, !ch.isPublic);
+                            }}
+                            className={clsx("p-1.5 rounded-md", activeChannel === ch.id ? "text-blue-100 hover:bg-blue-500" : "text-gray-400 hover:text-orange-600 hover:bg-gray-100")}
+                            title={ch.isPublic ? "Make Private" : "Make Public"}
+                          >
+                            {ch.isPublic ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteConfirmChannelId(ch.id);
+                            }}
+                            className={clsx("p-1.5 rounded-md", activeChannel === ch.id ? "text-blue-100 hover:bg-blue-500" : "text-gray-400 hover:text-red-600 hover:bg-gray-100")}
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
 
-                        {openChannelMenuId === ch.id && (
-                          <>
-                            <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-xl border border-gray-100 z-40 overflow-hidden">
-                              {/* Channel name label */}
-                              <div className="px-3 py-2 border-b border-gray-100">
-                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider truncate"># {ch.name}</p>
+                        {/* Desktop Dropdown Menu */}
+                        <div className="absolute right-1 top-1/2 -translate-y-1/2 z-10 hidden md:block">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setOpenChannelMenuId(openChannelMenuId === ch.id ? null : ch.id); }}
+                            className={clsx(
+                              "p-1 rounded transition-all",
+                              openChannelMenuId === ch.id ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                              activeChannel === ch.id
+                                ? "text-blue-100 hover:bg-blue-500"
+                                : "text-gray-500 hover:bg-gray-200 hover:text-gray-800"
+                            )}
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+
+                          {openChannelMenuId === ch.id && (
+                            <>
+                              <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-xl border border-gray-100 z-40 overflow-hidden">
+                                {/* Channel name label */}
+                                <div className="px-3 py-2 border-b border-gray-100">
+                                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider truncate"># {ch.name}</p>
+                                </div>
+                                <div className="py-1">
+                                  <button
+                                    onMouseDown={(e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      setOpenChannelMenuId(null);
+                                      setActiveChannel(ch.id);
+                                      setChannelNameInput(ch.name);
+                                      setIsEditingChannelName(true);
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5 text-gray-400" />
+                                    Rename
+                                  </button>
+                                  <button
+                                    onMouseDown={(e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      setOpenChannelMenuId(null);
+                                      handleUpdatePrivacy(ch.id, !ch.isPublic);
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                  >
+                                    {ch.isPublic ? (
+                                      <>
+                                        <Lock className="w-3.5 h-3.5 text-gray-400" />
+                                        Make Private
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Unlock className="w-3.5 h-3.5 text-gray-400" />
+                                        Make Public
+                                      </>
+                                    )}
+                                  </button>
+                                  <div className="h-px bg-gray-100 mx-2 my-1" />
+                                  <button
+                                    onMouseDown={(e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      setOpenChannelMenuId(null);
+                                      setDeleteConfirmChannelId(ch.id);
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    Delete
+                                  </button>
+                                </div>
                               </div>
-                              <div className="py-1">
-                                <button
-                                  onMouseDown={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    setOpenChannelMenuId(null);
-                                    setActiveChannel(ch.id);
-                                    setChannelNameInput(ch.name);
-                                    setIsEditingChannelName(true);
-                                  }}
-                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                >
-                                  <Pencil className="w-3.5 h-3.5 text-gray-400" />
-                                  Rename
-                                </button>
-                                <button
-                                  onMouseDown={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    setOpenChannelMenuId(null);
-                                    handleUpdatePrivacy(ch.id, !ch.isPublic);
-                                  }}
-                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                >
-                                  {ch.isPublic ? (
-                                    <>
-                                      <Lock className="w-3.5 h-3.5 text-gray-400" />
-                                      Make Private
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Unlock className="w-3.5 h-3.5 text-gray-400" />
-                                      Make Public
-                                    </>
-                                  )}
-                                </button>
-                                <div className="h-px bg-gray-100 mx-2 my-1" />
-                                <button
-                                  onMouseDown={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    setOpenChannelMenuId(null);
-                                    setDeleteConfirmChannelId(ch.id);
-                                  }}
-                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
+                            </>
+                          )}
+                        </div>
+                      </>
                     )}
                   </div>
                 );
@@ -398,9 +437,9 @@ export default function Chat() {
               {(user?.role === 'ADMIN' || user?.role === 'MODERATOR') && (
                 <button
                   onClick={() => setIsManageModalOpen(true)}
-                  className="md:hidden flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
                 >
-                  <Users className="w-3.5 h-3.5" /> Manage
+                  <UserPlus className="w-3.5 h-3.5" /> Add / Manage
                 </button>
               )}
               {isMember && (
@@ -476,10 +515,11 @@ export default function Chat() {
                         </div>
                       )}
 
-                      <div className="flex items-center gap-2 relative">
+                      <div className={clsx("flex gap-2 relative", isMe ? "flex-col md:flex-row-reverse items-end md:items-center" : "flex-col md:flex-row items-start md:items-center")}>
                         <div className={clsx(
-                          "absolute flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-10",
-                          isMe ? "right-[calc(100%+8px)]" : "left-[calc(100%+8px)]"
+                          "flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-10",
+                          "md:absolute",
+                          isMe ? "md:right-[calc(100%+8px)]" : "md:left-[calc(100%+8px)]"
                         )}>
                           {isMe && !msg.isDeleted && (Date.now() - new Date(msg.createdAt).getTime() <= 120000) && (
                             <button

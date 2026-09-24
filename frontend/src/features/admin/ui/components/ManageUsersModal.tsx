@@ -130,7 +130,7 @@ export default function ManageUsersModal({ isOpen, onClose, activeChannelId }: M
               <div className="flex flex-col gap-3">
                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider px-1">Members in Channel</h3>
                 {users.filter(u => channelMembers.has(u.id)).map(u => (
-                  <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 border border-gray-100 rounded-lg bg-gray-50/30 hover:bg-gray-50 transition-colors">
+                  <div key={u.id} className="flex items-center justify-between gap-3 p-3 border border-gray-100 rounded-lg bg-gray-50/30 hover:bg-gray-50 transition-colors">
                     
                     <div className="flex flex-col gap-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -182,7 +182,7 @@ export default function ManageUsersModal({ isOpen, onClose, activeChannelId }: M
                 <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-gray-100">
                   <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider px-1">Available to Add</h3>
                   {users.filter(u => !channelMembers.has(u.id)).map(u => (
-                    <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 border border-gray-100 rounded-lg bg-gray-50/30 hover:bg-gray-50 transition-colors opacity-80">
+                    <div key={u.id} className="flex items-center justify-between gap-3 p-3 border border-gray-100 rounded-lg bg-gray-50/30 hover:bg-gray-50 transition-colors opacity-80">
                       
                       <div className="flex flex-col gap-1">
                         <div className="flex flex-wrap items-center gap-2">
