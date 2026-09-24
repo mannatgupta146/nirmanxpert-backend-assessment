@@ -32,14 +32,20 @@ A full-stack implementation demonstrating robust RESTful APIs, secure WebSocket 
    - Moderators can delete messages and mute users globally.
    - Members can only participate in assigned channels.
 
-3. **Real-Time WebSockets**
+3. **Community & Channel Management**
+   - Create Public or Private (Invite-only) Channels.
+   - Private channels are strictly hidden from non-members and require an Admin invite.
+   - Admins can instantly toggle channel privacy (Make Public / Make Private) from the UI.
+   - "No Channel" intuitive empty-states for seamless user experience.
+
+4. **Real-Time WebSockets**
    - Room-based channel architecture via Socket.io.
    - Handshake authentication securely passes JWT via cookies.
    - Live message broadcasting, editing, and synchronization.
    - Cross-client real-time deletion (`message_deleted` event).
    - Typing indicators (`user_typing`).
 
-4. **Rate Limiting & Moderation**
+5. **Rate Limiting & Moderation**
    - Redis-backed sliding window rate limiter on the Socket connection.
    - Prevents chat spam (Max 5 messages per 3 seconds per user).
 
@@ -141,3 +147,26 @@ To evaluate the real-time syncing and RBAC moderation, follow these steps:
 4. In the Admin window, open the channel settings to rename the channel, or hover over the Member's message to delete it.
 5. Watch the changes dynamically update in both windows in real-time.
 6. Spam the Enter key in the Member window to trigger the Socket.io Redis Rate Limiter notification!
+
+---
+
+## Deployment Guide
+
+If you wish to deploy this project live for evaluation, the architecture is fully optimized for Vercel (Frontend) and Render (Backend).
+
+### Backend Deployment (Render)
+1. Create a new **Web Service** on [Render](https://render.com/).
+2. Connect your repository and set the Root Directory to `backend`.
+3. Set the **Build Command** to: `npm install && npm run build`
+   - *(Note: The `build` script in `package.json` automatically runs `npx prisma generate` before TypeScript compilation).*
+4. Set the **Start Command** to: `npm start`
+5. Under Environment Variables, add your MongoDB Atlas URL, JWT Secrets, and an Upstash/Render Redis URL.
+
+### Frontend Deployment (Vercel)
+1. Import your repository into [Vercel](https://vercel.com/).
+2. Set the **Root Directory** to `frontend`.
+3. Vercel will automatically detect Vite and set the build command to `npm run build`.
+4. Under Environment Variables, add:
+   - `VITE_API_URL` (Your Render URL + `/api`)
+   - `VITE_BACKEND_URL` (Your Render URL)
+5. Click **Deploy**.
