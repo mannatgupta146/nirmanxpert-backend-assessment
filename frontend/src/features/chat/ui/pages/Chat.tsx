@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../../auth/hooks/useAuth';
 import { useLogout } from '../../../auth/hooks/useLogout';
 import { useChat } from '../../hooks/useChat';
 import ManageUsersModal from '../../../admin/ui/components/ManageUsersModal';
 import LeaveChannelModal from '../components/LeaveChannelModal';
-import { LogOut, Hash, Send, Trash2, ShieldAlert, Plus, X, LogIn, LogOut as LeaveIcon, Pencil, Users, UserPlus, Search, MoreHorizontal, ChevronLeft, Lock, Unlock } from 'lucide-react';
+import { LogOut, Hash, Send, Trash2, ShieldAlert, Plus, X, LogIn, LogOut as LeaveIcon, Pencil, Users, UserPlus, Search, ChevronLeft, Lock, Unlock } from 'lucide-react';
 import clsx from 'clsx';
 
 function CreateChannelModal({ isOpen, onClose, onCreate }: { isOpen: boolean, onClose: () => void, onCreate: (name: string, isPublic: boolean) => void }) {
@@ -70,17 +70,11 @@ export default function Chat() {
   const [editInput, setEditInput] = useState('');
   const [channelSearch, setChannelSearch] = useState('');
   const [deleteConfirmChannelId, setDeleteConfirmChannelId] = useState<string | null>(null);
-  const [isEditingChannelName, setIsEditingChannelName] = useState(false);
+  const [privacyConfirmChannelId, setPrivacyConfirmChannelId] = useState<string | null>(null);
+  const [editingChannelId, setEditingChannelId] = useState<string | null>(null);
   const [channelNameInput, setChannelNameInput] = useState('');
-  const [openChannelMenuId, setOpenChannelMenuId] = useState<string | null>(null);
 
-  // Close channel menu when clicking anywhere outside
-  useEffect(() => {
-    if (!openChannelMenuId) return;
-    const close = () => setOpenChannelMenuId(null);
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, [openChannelMenuId]);
+
 
   return (
     <div className="w-full h-dvh bg-gray-50 p-0 sm:p-4 md:p-6 lg:p-8 flex flex-col overflow-hidden">
@@ -155,134 +149,79 @@ export default function Chat() {
 
                 const renderChannel = (ch: any) => (
                   <div key={ch.id} className="relative group">
-                    <button
-                      onClick={() => setActiveChannel(ch.id)}
-                      className={clsx(
-                        "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all text-left text-sm font-medium pr-24 md:pr-8",
-                        activeChannel === ch.id
-                          ? "bg-blue-600 text-white shadow-sm"
-                          : "text-gray-600 hover:bg-gray-200/50 hover:text-gray-900"
-                      )}
-                    >
-                      <Hash className={clsx("w-4 h-4 shrink-0", activeChannel === ch.id ? "text-blue-300" : "text-gray-400")} />
-                      <span className="truncate">{ch.name}</span>
-                    </button>
+                    {editingChannelId === ch.id && user?.role === 'ADMIN' ? (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const trimmed = channelNameInput.trim();
+                          if (trimmed && trimmed !== ch.name) {
+                            handleRenameChannel(ch.id, trimmed);
+                          }
+                          setEditingChannelId(null);
+                        }}
+                        className="w-full flex flex-col gap-1 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg shadow-sm"
+                      >
+                        <input
+                          autoFocus
+                          value={channelNameInput}
+                          onChange={e => setChannelNameInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Escape') setEditingChannelId(null); }}
+                          className="font-bold text-sm bg-transparent outline-none w-full text-blue-900 border-b border-blue-300"
+                        />
+                        <span className="text-[9px] text-blue-500 font-medium">Enter to save · Esc to cancel</span>
+                      </form>
+                    ) : (
+                      <button
+                        onClick={() => setActiveChannel(ch.id)}
+                        className={clsx(
+                          "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all text-left text-sm font-medium pr-24",
+                          activeChannel === ch.id
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "text-gray-600 hover:bg-gray-200/50 hover:text-gray-900"
+                        )}
+                      >
+                        <Hash className={clsx("w-4 h-4 shrink-0", activeChannel === ch.id ? "text-blue-300" : "text-gray-400")} />
+                        <span className="truncate">{ch.name}</span>
+                      </button>
+                    )}
 
-                    {user?.role === 'ADMIN' && (
-                      <>
-                        {/* Mobile Inline Actions */}
-                        <div className="absolute right-1 top-1/2 -translate-y-1/2 z-10 flex items-center md:hidden gap-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveChannel(ch.id);
-                              setChannelNameInput(ch.name);
-                              setIsEditingChannelName(true);
-                            }}
-                            className={clsx("p-1.5 rounded-md", activeChannel === ch.id ? "text-blue-100 hover:bg-blue-500" : "text-gray-400 hover:text-blue-600 hover:bg-gray-100")}
-                            title="Rename"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUpdatePrivacy(ch.id, !ch.isPublic);
-                            }}
-                            className={clsx("p-1.5 rounded-md", activeChannel === ch.id ? "text-blue-100 hover:bg-blue-500" : "text-gray-400 hover:text-orange-600 hover:bg-gray-100")}
-                            title={ch.isPublic ? "Make Private" : "Make Public"}
-                          >
-                            {ch.isPublic ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteConfirmChannelId(ch.id);
-                            }}
-                            className={clsx("p-1.5 rounded-md", activeChannel === ch.id ? "text-blue-100 hover:bg-blue-500" : "text-gray-400 hover:text-red-600 hover:bg-gray-100")}
-                            title="Delete"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-
-                        {/* Desktop Dropdown Menu */}
-                        <div className="absolute right-1 top-1/2 -translate-y-1/2 z-10 hidden md:block">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setOpenChannelMenuId(openChannelMenuId === ch.id ? null : ch.id); }}
-                            className={clsx(
-                              "p-1 rounded transition-all",
-                              openChannelMenuId === ch.id ? "opacity-100" : "opacity-0 group-hover:opacity-100",
-                              activeChannel === ch.id
-                                ? "text-blue-100 hover:bg-blue-500"
-                                : "text-gray-500 hover:bg-gray-200 hover:text-gray-800"
-                            )}
-                          >
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
-
-                          {openChannelMenuId === ch.id && (
-                            <>
-                              <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-xl border border-gray-100 z-40 overflow-hidden">
-                                {/* Channel name label */}
-                                <div className="px-3 py-2 border-b border-gray-100">
-                                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider truncate"># {ch.name}</p>
-                                </div>
-                                <div className="py-1">
-                                  <button
-                                    onMouseDown={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                      setOpenChannelMenuId(null);
-                                      setActiveChannel(ch.id);
-                                      setChannelNameInput(ch.name);
-                                      setIsEditingChannelName(true);
-                                    }}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                  >
-                                    <Pencil className="w-3.5 h-3.5 text-gray-400" />
-                                    Rename
-                                  </button>
-                                  <button
-                                    onMouseDown={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                      setOpenChannelMenuId(null);
-                                      handleUpdatePrivacy(ch.id, !ch.isPublic);
-                                    }}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                  >
-                                    {ch.isPublic ? (
-                                      <>
-                                        <Lock className="w-3.5 h-3.5 text-gray-400" />
-                                        Make Private
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Unlock className="w-3.5 h-3.5 text-gray-400" />
-                                        Make Public
-                                      </>
-                                    )}
-                                  </button>
-                                  <div className="h-px bg-gray-100 mx-2 my-1" />
-                                  <button
-                                    onMouseDown={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                      setOpenChannelMenuId(null);
-                                      setDeleteConfirmChannelId(ch.id);
-                                    }}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    Delete
-                                  </button>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </>
+                    {user?.role === 'ADMIN' && editingChannelId !== ch.id && (
+                      <div className={clsx(
+                        "absolute right-1 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 rounded-md",
+                        activeChannel === ch.id ? "bg-transparent md:bg-blue-600" : "bg-transparent md:bg-gray-50"
+                      )}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setChannelNameInput(ch.name);
+                            setEditingChannelId(ch.id);
+                          }}
+                          className={clsx("p-1.5 rounded-md", activeChannel === ch.id ? "text-blue-100 hover:bg-blue-500" : "text-gray-400 hover:text-blue-600 hover:bg-gray-200")}
+                          title="Rename"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPrivacyConfirmChannelId(ch.id);
+                          }}
+                          className={clsx("p-1.5 rounded-md", activeChannel === ch.id ? "text-blue-100 hover:bg-blue-500" : "text-gray-400 hover:text-orange-600 hover:bg-gray-200")}
+                          title={ch.isPublic ? "Make Private" : "Make Public"}
+                        >
+                          {ch.isPublic ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirmChannelId(ch.id);
+                          }}
+                          className={clsx("p-1.5 rounded-md", activeChannel === ch.id ? "text-blue-100 hover:bg-blue-500" : "text-gray-400 hover:text-red-600 hover:bg-gray-200")}
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 );
@@ -383,56 +322,12 @@ export default function Chat() {
                 <Hash className="w-4 h-4 text-gray-500" />
               </div>
               <div className="flex flex-col min-w-0">
-                {isEditingChannelName && user?.role === 'ADMIN' ? (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const trimmed = channelNameInput.trim();
-                      if (trimmed && trimmed !== channels.find(c => c.id === activeChannel)?.name) {
-                        handleRenameChannel(activeChannel!, trimmed);
-                      }
-                      setIsEditingChannelName(false);
-                    }}
-                    className="flex-1 min-w-0"
-                  >
-                    <input
-                      autoFocus
-                      value={channelNameInput}
-                      onChange={e => setChannelNameInput(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Escape') setIsEditingChannelName(false); }}
-                      className="font-bold text-gray-900 text-base tracking-tight leading-tight bg-transparent border-b-2 border-blue-500 outline-none w-full max-w-30 sm:max-w-50"
-                    />
-                    <span className="block text-[10px] text-gray-400">Enter to save · Esc to cancel</span>
-                  </form>
-                ) : (
-                  <div className="flex items-center gap-2 min-w-0">
-                    <h2
-                      className={clsx("font-bold text-gray-900 text-base tracking-tight leading-tight truncate", user?.role === 'ADMIN' && "cursor-pointer hover:text-blue-600 transition-colors")}
-                      title={user?.role === 'ADMIN' ? 'Double-click to rename' : undefined}
-                      onDoubleClick={() => {
-                        if (user?.role === 'ADMIN') {
-                          setChannelNameInput(channels.find(c => c.id === activeChannel)?.name || '');
-                          setIsEditingChannelName(true);
-                        }
-                      }}
-                    >
-                      {channels.find(c => c.id === activeChannel)?.name || 'Loading...'}
-                    </h2>
-                    {user?.role === 'ADMIN' && channels.find(c => c.id === activeChannel) && (
-                      <button
-                        onClick={() => {
-                          const ch = channels.find(c => c.id === activeChannel);
-                          if (ch) handleUpdatePrivacy(ch.id, !ch.isPublic);
-                        }}
-                        className="text-gray-400 hover:text-orange-500 transition-colors p-1 rounded-md hover:bg-gray-100 shrink-0"
-                        title={channels.find(c => c.id === activeChannel)?.isPublic ? "Make Private" : "Make Public"}
-                      >
-                        {channels.find(c => c.id === activeChannel)?.isPublic ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-                      </button>
-                    )}
-                  </div>
-                )}
-                {channels.find(c => c.id === activeChannel)?.createdAt && !isEditingChannelName && (
+                <div className="flex items-center gap-2 min-w-0">
+                  <h2 className="font-bold text-gray-900 text-base tracking-tight leading-tight truncate">
+                    {channels.find(c => c.id === activeChannel)?.name || 'Loading...'}
+                  </h2>
+                </div>
+                {channels.find(c => c.id === activeChannel)?.createdAt && (
                   <span className="text-[11px] text-gray-400 font-medium truncate">
                     Created {new Date(channels.find(c => c.id === activeChannel)!.createdAt).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}
                   </span>
@@ -687,6 +582,51 @@ export default function Chat() {
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={(name, isPublic) => handleCreateChannel(name, isPublic)}
       />
+
+      {/* Privacy Toggle Confirmation */}
+      {privacyConfirmChannelId && (
+        <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden">
+            <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex gap-3 items-center bg-gray-50/50">
+              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                {channels.find(c => c.id === privacyConfirmChannelId)?.isPublic ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+              </div>
+              <h2 className="text-base font-bold text-gray-900">Change Privacy</h2>
+            </div>
+            <div className="px-6 py-5 flex flex-col gap-4">
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Are you sure you want to make <strong className="text-gray-900">#{channels.find(c => c.id === privacyConfirmChannelId)?.name}</strong>{" "}
+                <strong className={channels.find(c => c.id === privacyConfirmChannelId)?.isPublic ? "text-orange-600" : "text-emerald-600"}>
+                  {channels.find(c => c.id === privacyConfirmChannelId)?.isPublic ? "Private" : "Public"}
+                </strong>?
+              </p>
+              <p className="text-xs text-gray-400 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                {channels.find(c => c.id === privacyConfirmChannelId)?.isPublic 
+                  ? "Private channels are only visible to members you explicitly add. Other users will no longer see this channel." 
+                  : "Public channels are visible to everyone. Anyone will be able to read messages and join the channel."}
+              </p>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => setPrivacyConfirmChannelId(null)}
+                  className="px-4 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { 
+                    const ch = channels.find(c => c.id === privacyConfirmChannelId);
+                    if (ch) handleUpdatePrivacy(ch.id, !ch.isPublic);
+                    setPrivacyConfirmChannelId(null); 
+                  }}
+                  className="px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all active:scale-95 shadow-sm"
+                >
+                  Confirm Change
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Channel Confirmation */}
       {deleteConfirmChannelId && (
