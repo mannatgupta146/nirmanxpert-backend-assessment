@@ -4,7 +4,7 @@
   "description": "Backend API for Nirmanxpert Assessment",
   "main": "src/index.js",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "node dist/src/index.js",
     "dev": "nodemon src/index.ts",
     "build": "npx prisma generate && tsc",
     "test": "jest"
