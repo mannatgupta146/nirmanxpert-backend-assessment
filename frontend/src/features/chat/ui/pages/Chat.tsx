@@ -174,7 +174,7 @@ export default function Chat() {
                           onClick={(e) => { e.stopPropagation(); setOpenChannelMenuId(openChannelMenuId === ch.id ? null : ch.id); }}
                           className={clsx(
                             "p-1 rounded transition-all",
-                            openChannelMenuId === ch.id ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                            openChannelMenuId === ch.id ? "opacity-100" : "opacity-100 md:opacity-0 md:group-hover:opacity-100",
                             activeChannel === ch.id
                               ? "text-blue-100 hover:bg-blue-500"
                               : "text-gray-500 hover:bg-gray-200 hover:text-gray-800"
@@ -394,14 +394,24 @@ export default function Chat() {
               </div>
             </div>
 
-            {isMember && (
-              <button
-                onClick={() => setIsLeaveModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
-              >
-                <LeaveIcon className="w-3.5 h-3.5" /> Leave
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {(user?.role === 'ADMIN' || user?.role === 'MODERATOR') && (
+                <button
+                  onClick={() => setIsManageModalOpen(true)}
+                  className="md:hidden flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  <Users className="w-3.5 h-3.5" /> Manage
+                </button>
+              )}
+              {isMember && (
+                <button
+                  onClick={() => setIsLeaveModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+                >
+                  <LeaveIcon className="w-3.5 h-3.5" /> Leave
+                </button>
+              )}
+            </div>
           </div>
 
           {!isMember ? (
@@ -468,7 +478,7 @@ export default function Chat() {
 
                       <div className="flex items-center gap-2 relative">
                         <div className={clsx(
-                          "absolute flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all z-10",
+                          "absolute flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-10",
                           isMe ? "right-[calc(100%+8px)]" : "left-[calc(100%+8px)]"
                         )}>
                           {isMe && !msg.isDeleted && (Date.now() - new Date(msg.createdAt).getTime() <= 120000) && (

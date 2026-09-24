@@ -101,7 +101,7 @@ export default function ManageUsersModal({ isOpen, onClose, activeChannelId }: M
 
   return (
     <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50/50 shrink-0">
@@ -115,7 +115,7 @@ export default function ManageUsersModal({ isOpen, onClose, activeChannelId }: M
         </div>
 
         {/* Content */}
-        <div className="p-6 pb-32 overflow-y-auto flex-1 custom-scrollbar">
+        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-600 flex items-center gap-2">
               <ShieldAlert className="w-4 h-4" /> {error}
