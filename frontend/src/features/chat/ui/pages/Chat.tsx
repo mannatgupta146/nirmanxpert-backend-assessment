@@ -4,7 +4,7 @@ import { useLogout } from '../../../auth/hooks/useLogout';
 import { useChat } from '../../hooks/useChat';
 import ManageUsersModal from '../../../admin/ui/components/ManageUsersModal';
 import LeaveChannelModal from '../components/LeaveChannelModal';
-import { LogOut, Hash, Send, Trash2, ShieldAlert, Settings, Plus, X, LogIn, LogOut as LeaveIcon, Pencil, Users, UserPlus, Search, MoreHorizontal, ChevronLeft, Lock, Unlock } from 'lucide-react';
+import { LogOut, Hash, Send, Trash2, ShieldAlert, Plus, X, LogIn, LogOut as LeaveIcon, Pencil, Users, UserPlus, Search, MoreHorizontal, ChevronLeft, Lock, Unlock } from 'lucide-react';
 import clsx from 'clsx';
 
 function CreateChannelModal({ isOpen, onClose, onCreate }: { isOpen: boolean, onClose: () => void, onCreate: (name: string, isPublic: boolean) => void }) {
@@ -341,15 +341,7 @@ export default function Chat() {
                 <span className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold truncate mt-0.5">{user?.role}</span>
               </div>
 
-              {(user?.role === 'ADMIN' || user?.role === 'MODERATOR') && (
-                <button
-                  onClick={() => setIsManageModalOpen(true)}
-                  className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-gray-500 hover:text-blue-600 shrink-0"
-                  title="Manage Users & Mutes"
-                >
-                  <Settings className="w-4 h-4" />
-                </button>
-              )}
+
 
               <button
                 onClick={logout}
@@ -390,7 +382,7 @@ export default function Chat() {
               <div className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 mr-3 shrink-0">
                 <Hash className="w-4 h-4 text-gray-500" />
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-0">
                 {isEditingChannelName && user?.role === 'ADMIN' ? (
                   <form
                     onSubmit={(e) => {
@@ -401,45 +393,60 @@ export default function Chat() {
                       }
                       setIsEditingChannelName(false);
                     }}
+                    className="flex-1 min-w-0"
                   >
                     <input
                       autoFocus
                       value={channelNameInput}
                       onChange={e => setChannelNameInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Escape') setIsEditingChannelName(false); }}
-                      className="font-bold text-gray-900 text-base tracking-tight leading-tight bg-transparent border-b-2 border-blue-500 outline-none w-full"
+                      className="font-bold text-gray-900 text-base tracking-tight leading-tight bg-transparent border-b-2 border-blue-500 outline-none w-full max-w-30 sm:max-w-50"
                     />
-                    <span className="text-[10px] text-gray-400">Enter to save · Esc to cancel</span>
+                    <span className="block text-[10px] text-gray-400">Enter to save · Esc to cancel</span>
                   </form>
                 ) : (
-                  <h2
-                    className={clsx("font-bold text-gray-900 text-base tracking-tight leading-tight", user?.role === 'ADMIN' && "cursor-pointer hover:text-blue-600 transition-colors")}
-                    title={user?.role === 'ADMIN' ? 'Double-click to rename' : undefined}
-                    onDoubleClick={() => {
-                      if (user?.role === 'ADMIN') {
-                        setChannelNameInput(channels.find(c => c.id === activeChannel)?.name || '');
-                        setIsEditingChannelName(true);
-                      }
-                    }}
-                  >
-                    {channels.find(c => c.id === activeChannel)?.name || 'Loading...'}
-                  </h2>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h2
+                      className={clsx("font-bold text-gray-900 text-base tracking-tight leading-tight truncate", user?.role === 'ADMIN' && "cursor-pointer hover:text-blue-600 transition-colors")}
+                      title={user?.role === 'ADMIN' ? 'Double-click to rename' : undefined}
+                      onDoubleClick={() => {
+                        if (user?.role === 'ADMIN') {
+                          setChannelNameInput(channels.find(c => c.id === activeChannel)?.name || '');
+                          setIsEditingChannelName(true);
+                        }
+                      }}
+                    >
+                      {channels.find(c => c.id === activeChannel)?.name || 'Loading...'}
+                    </h2>
+                    {user?.role === 'ADMIN' && channels.find(c => c.id === activeChannel) && (
+                      <button
+                        onClick={() => {
+                          const ch = channels.find(c => c.id === activeChannel);
+                          if (ch) handleUpdatePrivacy(ch.id, !ch.isPublic);
+                        }}
+                        className="text-gray-400 hover:text-orange-500 transition-colors p-1 rounded-md hover:bg-gray-100 shrink-0"
+                        title={channels.find(c => c.id === activeChannel)?.isPublic ? "Make Private" : "Make Public"}
+                      >
+                        {channels.find(c => c.id === activeChannel)?.isPublic ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                      </button>
+                    )}
+                  </div>
                 )}
                 {channels.find(c => c.id === activeChannel)?.createdAt && !isEditingChannelName && (
-                  <span className="text-[11px] text-gray-400 font-medium">
+                  <span className="text-[11px] text-gray-400 font-medium truncate">
                     Created {new Date(channels.find(c => c.id === activeChannel)!.createdAt).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {(user?.role === 'ADMIN' || user?.role === 'MODERATOR') && (
                 <button
                   onClick={() => setIsManageModalOpen(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
                 >
-                  <UserPlus className="w-3.5 h-3.5" /> Add / Manage
+                  <UserPlus className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Add / Manage</span><span className="sm:hidden">Add</span>
                 </button>
               )}
               {isMember && (

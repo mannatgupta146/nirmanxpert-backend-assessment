@@ -132,15 +132,15 @@ export default function ManageUsersModal({ isOpen, onClose, activeChannelId }: M
                 {users.filter(u => channelMembers.has(u.id)).map(u => (
                   <div key={u.id} className="flex items-center justify-between gap-3 p-3 border border-gray-100 rounded-lg bg-gray-50/30 hover:bg-gray-50 transition-colors">
                     
-                    <div className="flex flex-col gap-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold text-gray-900 text-sm">{u.email.split('@')[0]}</span>
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Joined</span>
+                    <div className="flex flex-col gap-1 min-w-0 flex-1 mr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900 text-sm truncate">{u.email.split('@')[0]}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">Joined</span>
                       </div>
-                      <span className="text-xs text-gray-500 break-all">{u.email}</span>
+                      <span className="text-xs text-gray-500 truncate">{u.email}</span>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                       {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MODERATOR') && currentUser?.id !== u.id && 
                         (currentUser?.role === 'ADMIN' ? u.role !== 'ADMIN' : u.role === 'MEMBER') && (
                         <button
@@ -184,15 +184,15 @@ export default function ManageUsersModal({ isOpen, onClose, activeChannelId }: M
                   {users.filter(u => !channelMembers.has(u.id)).map(u => (
                     <div key={u.id} className="flex items-center justify-between gap-3 p-3 border border-gray-100 rounded-lg bg-gray-50/30 hover:bg-gray-50 transition-colors opacity-80">
                       
-                      <div className="flex flex-col gap-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-gray-900 text-sm">{u.email.split('@')[0]}</span>
-                          <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">Not Joined</span>
+                      <div className="flex flex-col gap-1 min-w-0 flex-1 mr-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-900 text-sm truncate">{u.email.split('@')[0]}</span>
+                          <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 shrink-0">Not Joined</span>
                         </div>
-                        <span className="text-xs text-gray-500 break-all">{u.email}</span>
+                        <span className="text-xs text-gray-500 truncate">{u.email}</span>
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         {currentUser?.role === 'ADMIN' && (
                           <button
                             onClick={async () => {
