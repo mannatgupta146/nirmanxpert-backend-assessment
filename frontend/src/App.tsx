@@ -6,14 +6,16 @@ import Register from './features/auth/ui/pages/Register';
 import Chat from './features/chat/ui/pages/Chat';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { token } = useAuth();
-  if (!token) return <Navigate to="/login" />;
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500">Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
   return <>{children}</>;
 };
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { token } = useAuth();
-  if (token) return <Navigate to="/chat" />;
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500">Loading...</div>;
+  if (user) return <Navigate to="/chat" />;
   return <>{children}</>;
 };
 

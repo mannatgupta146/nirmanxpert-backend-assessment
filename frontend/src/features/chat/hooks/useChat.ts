@@ -4,7 +4,7 @@ import { initSocket, disconnectSocket } from '../socket/socket';
 import { useAuth } from '../../auth/hooks/useAuth';
 
 export const useChat = () => {
-  const { token } = useAuth();
+  const { user } = useAuth();
   
   const [channels, setChannels] = useState<any[]>([]);
   const [activeChannel, setActiveChannel] = useState<string | null>(null);
@@ -24,24 +24,20 @@ export const useChat = () => {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const activeChannelRef = useRef<string | null>(null);
 
-  // Auto-scroll on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!user) return;
     
-    // Fetch channels
     fetchChannels();
 
-    // Setup Socket
-    const socket = initSocket(token);
+    const socket = initSocket();
     socketRef.current = socket;
     
     socket.on('connect', () => {
       setIsConnected(true);
-      // Re-join active channel if reconnecting
       if (activeChannelRef.current) {
         socket.emit('join_channel', activeChannelRef.current);
       }
@@ -102,7 +98,8 @@ export const useChat = () => {
     });
 
     socket.on('error', (data: any) => {
-      alert(`Socket Error: ${data.message || 'Unknown error'}`);
+      setRateLimitError(data.message || 'Socket error occurred');
+      setTimeout(() => setRateLimitError(null), 3000);
     });
     
     socket.on('rate_limit_error', (data: any) => {
@@ -111,9 +108,8 @@ export const useChat = () => {
     });
 
     return () => disconnectSocket();
-  }, [token]);
+  }, [user]);
 
-  // Handle Channel Switch
   useEffect(() => {
     activeChannelRef.current = activeChannel;
     if (!socketRef.current || !activeChannel) return;
@@ -122,7 +118,7 @@ export const useChat = () => {
       .then(data => {
         setMessages(data.reverse());
         setIsMember(true);
-        setTypingUsersMap(new Map()); // Reset typing on channel switch
+        setTypingUsersMap(new Map());
         socketRef.current.emit('join_channel', activeChannel);
       })
       .catch(err => {
@@ -194,9 +190,9 @@ export const useChat = () => {
     });
   };
 
-  const handleCreateChannel = async (name: string) => {
+  const handleCreateChannel = async (name: string, isPublic: boolean = true) => {
     try {
-      const newChannel = await chatApi.createChannel(name);
+      const newChannel = await chatApi.createChannel(name, isPublic);
       setChannels(prev => [newChannel, ...prev]);
       setJoinedChannelIds(prev => new Set([...prev, newChannel.id]));
       setActiveChannel(newChannel.id);
@@ -222,10 +218,20 @@ export const useChat = () => {
 
   const handleRenameChannel = async (channelId: string, newName: string) => {
     try {
-      const updated = await chatApi.updateChannel(channelId, newName);
+      const updated = await chatApi.updateChannel(channelId, { name: newName });
       setChannels(prev => prev.map(c => c.id === channelId ? { ...c, name: updated.name } : c));
     } catch (err: any) {
       const msg = err.response?.data?.error || err.response?.data?.errors?.[0]?.message || 'Failed to rename channel';
+      alert(msg);
+    }
+  };
+
+  const handleUpdatePrivacy = async (channelId: string, isPublic: boolean) => {
+    try {
+      const updated = await chatApi.updateChannel(channelId, { isPublic });
+      setChannels(prev => prev.map(c => c.id === channelId ? { ...c, isPublic: updated.isPublic } : c));
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.response?.data?.errors?.[0]?.message || 'Failed to update channel privacy';
       alert(msg);
     }
   };
@@ -236,7 +242,6 @@ export const useChat = () => {
       await chatApi.joinChannel(activeChannel);
       setIsMember(true);
       setJoinedChannelIds(prev => new Set([...prev, activeChannel]));
-      // Trigger a re-fetch of messages
       const data = await chatApi.getMessages(activeChannel);
       setMessages(data.reverse());
       socketRef.current?.emit('join_channel', activeChannel);
@@ -253,7 +258,7 @@ export const useChat = () => {
       setJoinedChannelIds(prev => { const n = new Set(prev); n.delete(activeChannel); return n; });
       setMessages([]);
       socketRef.current?.emit('leave_channel', activeChannel);
-      return true; // Return success status for UI
+      return true;
     } catch (err: any) {
       alert(err.response?.data?.error || 'Failed to leave channel');
       return false;
@@ -277,6 +282,7 @@ export const useChat = () => {
     handleCreateChannel,
     handleDeleteChannel,
     handleRenameChannel,
+    handleUpdatePrivacy,
     handleJoinChannel,
     handleLeaveChannel,
     editMessage,

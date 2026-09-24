@@ -19,7 +19,7 @@ export const useRegister = () => {
       
       // 2. Automatically log them in after registration
       const res = await authApi.login({ email: data.email, password: data.password });
-      setAuthContext(res.accessToken, res.refreshToken, res.user);
+      setAuthContext(res.user);
       
       navigate('/chat');
     } catch (err: any) {

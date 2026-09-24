@@ -1,16 +1,10 @@
 import axios from 'axios';
 
-export const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
-});
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Request Interceptor
-api.interceptors.request.use((config) => {
-  const currentToken = sessionStorage.getItem('accessToken');
-  if (currentToken) {
-    config.headers.Authorization = `Bearer ${currentToken}`;
-  }
-  return config;
+export const api = axios.create({
+  baseURL,
+  withCredentials: true,
 });
 
 // Response Interceptor for silent refresh
@@ -19,27 +13,16 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && originalRequest.url !== '/auth/refresh' && originalRequest.url !== '/auth/login') {
       originalRequest._retry = true;
       try {
-        const refreshToken = sessionStorage.getItem('refreshToken');
-        if (!refreshToken) throw new Error('No refresh token available');
-
-        const res = await axios.post('http://localhost:5000/api/auth/refresh', { token: refreshToken });
+        // The backend uses HttpOnly cookies now, so we just make the request
+        await axios.post(`${baseURL}/auth/refresh`, {}, { withCredentials: true });
         
-        const newAccessToken = res.data.accessToken;
-        sessionStorage.setItem('accessToken', newAccessToken);
-        
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        
-        // Notify React context to update its in-memory token
-        window.dispatchEvent(new CustomEvent('token_refreshed', { detail: newAccessToken }));
-
+        // Retry original request (browser will automatically include the new accessToken cookie)
         return api(originalRequest);
       } catch (refreshError) {
         // Force completely clear auth on failure
-        sessionStorage.removeItem('accessToken');
-        sessionStorage.removeItem('refreshToken');
         sessionStorage.removeItem('user');
         window.dispatchEvent(new Event('auth_logout'));
         return Promise.reject(refreshError);

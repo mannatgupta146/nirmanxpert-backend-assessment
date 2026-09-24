@@ -10,13 +10,19 @@ declare global {
 }
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
+  let token = req.cookies?.accessToken;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
+  // Fallback to Authorization header if cookie is missing (useful for testing or mobile clients)
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
   }
 
-  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
+  }
 
   try {
     const payload = verifyAccessToken(token);

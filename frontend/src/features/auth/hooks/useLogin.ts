@@ -15,7 +15,7 @@ export const useLogin = () => {
     
     try {
       const res = await authApi.login(credentials);
-      setAuthContext(res.accessToken, res.refreshToken, res.user);
+      setAuthContext(res.user);
       navigate('/chat');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Invalid credentials or connection failed.');

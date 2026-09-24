@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLogin } from '../../hooks/useLogin';
-import { ShieldAlert, ShieldCheck, User as UserIcon, Loader2, Eye, EyeOff } from 'lucide-react';
+import { ShieldAlert, UserCog, UserCheck, User as UserIcon, Loader2, Eye, EyeOff } from 'lucide-react';
 import clsx from 'clsx';
 
 const PRESETS = [
-  { role: 'ADMIN', email: 'admin@test.com', password: 'password123', icon: ShieldAlert, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', hover: 'hover:bg-red-100' },
-  { role: 'MODERATOR', email: 'mod@test.com', password: 'password123', icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', hover: 'hover:bg-emerald-100' },
+  { role: 'ADMIN', email: 'admin@test.com', password: 'password123', icon: UserCog, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', hover: 'hover:bg-red-100' },
+  { role: 'MODERATOR', email: 'mod@test.com', password: 'password123', icon: UserCheck, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', hover: 'hover:bg-emerald-100' },
   { role: 'MEMBER', email: 'member@test.com', password: 'password123', icon: UserIcon, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', hover: 'hover:bg-blue-100' },
 ];
 

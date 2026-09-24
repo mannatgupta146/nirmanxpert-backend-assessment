@@ -2,13 +2,14 @@ import { io, Socket } from 'socket.io-client';
 
 let socket: Socket | null = null;
 
-export const initSocket = (token: string): Socket => {
+export const initSocket = (): Socket => {
   if (socket) {
     socket.disconnect();
   }
   
-  socket = io('http://localhost:5000', {
-    auth: { token },
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+  socket = io(backendUrl, {
+    withCredentials: true,
     reconnection: true,
   });
   

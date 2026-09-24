@@ -130,14 +130,14 @@ export default function ManageUsersModal({ isOpen, onClose, activeChannelId }: M
               <div className="flex flex-col gap-3">
                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider px-1">Members in Channel</h3>
                 {users.filter(u => channelMembers.has(u.id)).map(u => (
-                  <div key={u.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg bg-gray-50/30 hover:bg-gray-50 transition-colors">
+                  <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 border border-gray-100 rounded-lg bg-gray-50/30 hover:bg-gray-50 transition-colors">
                     
                     <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold text-gray-900 text-sm">{u.email.split('@')[0]}</span>
                         <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Joined</span>
                       </div>
-                      <span className="text-xs text-gray-500">{u.email}</span>
+                      <span className="text-xs text-gray-500 break-all">{u.email}</span>
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -182,14 +182,14 @@ export default function ManageUsersModal({ isOpen, onClose, activeChannelId }: M
                 <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-gray-100">
                   <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider px-1">Available to Add</h3>
                   {users.filter(u => !channelMembers.has(u.id)).map(u => (
-                    <div key={u.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg bg-gray-50/30 hover:bg-gray-50 transition-colors opacity-80">
+                    <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 border border-gray-100 rounded-lg bg-gray-50/30 hover:bg-gray-50 transition-colors opacity-80">
                       
                       <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="font-semibold text-gray-900 text-sm">{u.email.split('@')[0]}</span>
                           <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">Not Joined</span>
                         </div>
-                        <span className="text-xs text-gray-500">{u.email}</span>
+                        <span className="text-xs text-gray-500 break-all">{u.email}</span>
                       </div>
 
                       <div className="flex items-center gap-3">

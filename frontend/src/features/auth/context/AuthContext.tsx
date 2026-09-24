@@ -10,8 +10,8 @@ export interface User {
 
 export interface AuthContextType {
   user: User | null;
-  token: string | null;
-  login: (accessToken: string, refreshToken: string, userData: User) => void;
+  isLoading: boolean;
+  login: (userData: User) => void;
   logout: () => void;
 }
 
@@ -22,49 +22,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedUser = sessionStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
-  
-  const [token, setToken] = useState<string | null>(() => {
-    return sessionStorage.getItem('accessToken');
-  });
+
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-
-    // Listen for events from Axios interceptors
     const handleLogout = () => {
-      setToken(null);
       setUser(null);
-    };
-    const handleTokenRefresh = (e: any) => {
-      setToken(e.detail);
+      sessionStorage.removeItem('user');
     };
 
     window.addEventListener('auth_logout', handleLogout);
-    window.addEventListener('token_refreshed', handleTokenRefresh);
     
+    const initializeAuth = async () => {
+      try {
+        const { api } = await import('../../../shared/api/axios');
+        const res = await api.get('/auth/me');
+        setUser(res.data);
+        sessionStorage.setItem('user', JSON.stringify(res.data));
+      } catch (error) {
+        setUser(null);
+        sessionStorage.removeItem('user');
+      }
+      setIsLoading(false);
+    };
+
+    initializeAuth();
+
     return () => {
       window.removeEventListener('auth_logout', handleLogout);
-      window.removeEventListener('token_refreshed', handleTokenRefresh);
     };
   }, []);
 
-  const login = (accessToken: string, refreshToken: string, userData: User) => {
-    setToken(accessToken);
+  const login = (userData: User) => {
     setUser(userData);
-    sessionStorage.setItem('accessToken', accessToken);
-    sessionStorage.setItem('refreshToken', refreshToken);
     sessionStorage.setItem('user', JSON.stringify(userData));
   };
 
-  const logout = () => {
-    setToken(null);
+  const logout = async () => {
+    try {
+      const { api } = await import('../../../shared/api/axios');
+      await api.post('/auth/logout');
+    } catch (err) {
+      console.error(err);
+    }
     setUser(null);
-    sessionStorage.removeItem('accessToken');
-    sessionStorage.removeItem('refreshToken');
     sessionStorage.removeItem('user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

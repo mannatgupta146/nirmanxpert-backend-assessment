@@ -1,8 +1,8 @@
 import express from 'express';
-// Triggering backend restart for Prisma client update (updatedAt optional)
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
@@ -17,8 +17,15 @@ import userRoutes from './routes/user.routes';
 
 // Middlewares
 app.use(helmet());
-app.use(cors());
+
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+app.use(cors({
+  origin: frontendUrl,
+  credentials: true,
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -29,11 +36,11 @@ app.use('/api/users', userRoutes);
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: '*', // In production, restrict this to your frontend URL
+    origin: frontendUrl,
+    credentials: true,
   },
 });
 
-// Basic Route
 app.get('/', (req, res) => {
   res.json({ message: 'Nirmanxpert API is running' });
 });
@@ -41,13 +48,9 @@ app.get('/', (req, res) => {
 import { socketAuthMiddleware } from './sockets/auth.socket';
 import { setupChatSockets } from './sockets/chat.socket';
 
-// Socket.io configuration & authentication
 io.use(socketAuthMiddleware);
-
-// Initialize chat socket events
 setupChatSockets(io);
 
-// Start the server
 httpServer.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });

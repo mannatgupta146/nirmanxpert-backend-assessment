@@ -7,7 +7,14 @@ export interface AuthenticatedSocket extends Socket {
 }
 
 export const socketAuthMiddleware = (socket: AuthenticatedSocket, next: (err?: Error) => void) => {
-  const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
+  let token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
+  
+  if (!token && socket.request.headers.cookie) {
+    token = socket.request.headers.cookie
+      .split('; ')
+      .find(row => row.startsWith('accessToken='))
+      ?.split('=')[1];
+  }
 
   if (!token) {
     return next(new Error('Authentication error: Missing token'));

@@ -29,8 +29,8 @@ export const chatApi = {
     const res = await api.post(`/channels/${channelId}/leave`, { successorId });
     return res.data;
   },
-  updateChannel: async (channelId: string, name: string) => {
-    const res = await api.put(`/channels/${channelId}`, { name });
+  updateChannel: async (channelId: string, data: { name?: string, isPublic?: boolean }) => {
+    const res = await api.put(`/channels/${channelId}`, data);
     return res.data;
   }
 };

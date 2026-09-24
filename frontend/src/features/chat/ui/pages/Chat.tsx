@@ -4,12 +4,13 @@ import { useLogout } from '../../../auth/hooks/useLogout';
 import { useChat } from '../../hooks/useChat';
 import ManageUsersModal from '../../../admin/ui/components/ManageUsersModal';
 import LeaveChannelModal from '../components/LeaveChannelModal';
-import { LogOut, Hash, Send, Trash2, ShieldAlert, Settings, Plus, X, LogIn, LogOut as LeaveIcon, Pencil, Users, Search, MoreHorizontal } from 'lucide-react';
+import { LogOut, Hash, Send, Trash2, ShieldAlert, Settings, Plus, X, LogIn, LogOut as LeaveIcon, Pencil, Users, Search, MoreHorizontal, ChevronLeft, Lock, Unlock } from 'lucide-react';
 import clsx from 'clsx';
 
-// Simple modal for creating a channel
-function CreateChannelModal({ isOpen, onClose, onCreate }: { isOpen: boolean, onClose: () => void, onCreate: (name: string) => void }) {
+function CreateChannelModal({ isOpen, onClose, onCreate }: { isOpen: boolean, onClose: () => void, onCreate: (name: string, isPublic: boolean) => void }) {
   const [name, setName] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
+  
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center animate-in fade-in duration-200">
@@ -18,8 +19,14 @@ function CreateChannelModal({ isOpen, onClose, onCreate }: { isOpen: boolean, on
           <h2 className="font-bold text-gray-900 flex items-center gap-2"><Hash className="w-4 h-4 text-gray-500" /> Create Channel</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors"><X className="w-5 h-5" /></button>
         </div>
-        <form onSubmit={(e) => { e.preventDefault(); onCreate(name); onClose(); setName(''); }} className="p-6">
+        <form onSubmit={(e) => { e.preventDefault(); onCreate(name, isPublic); onClose(); setName(''); setIsPublic(true); }} className="p-6">
           <input autoFocus type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. announcements" className="w-full bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 outline-none transition-all rounded-lg px-4 py-2.5 text-sm font-medium text-gray-900 mb-4" />
+          
+          <label className="flex items-center gap-2 mb-6 cursor-pointer group">
+            <input type="checkbox" checked={!isPublic} onChange={e => setIsPublic(!e.target.checked)} className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer" />
+            <span className="text-sm text-gray-700 group-hover:text-gray-900 font-medium">Make Private</span>
+          </label>
+
           <button type="submit" disabled={!name.trim()} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 text-white font-bold py-2.5 rounded-lg transition-all shadow-sm">Create</button>
         </form>
       </div>
@@ -48,6 +55,7 @@ export default function Chat() {
     handleCreateChannel,
     handleDeleteChannel,
     handleRenameChannel,
+    handleUpdatePrivacy,
     handleJoinChannel,
     handleLeaveChannel,
     editMessage,
@@ -75,13 +83,17 @@ export default function Chat() {
   }, [openChannelMenuId]);
 
   return (
-    <div className="w-full h-screen max-h-screen bg-gray-50 p-4 md:p-6 lg:p-8 flex flex-col overflow-hidden">
+    <div className="w-full h-dvh bg-gray-50 p-0 sm:p-4 md:p-6 lg:p-8 flex flex-col overflow-hidden">
 
       {/* Premium Application Card */}
-      <div className="flex-1 max-w-350 mx-auto w-full bg-white border border-gray-200 rounded-2xl shadow-xl shadow-gray-200/50 flex overflow-hidden min-h-0 ring-1 ring-gray-900/5">
+      <div className="flex-1 max-w-350 mx-auto w-full bg-white sm:border border-gray-200 sm:rounded-2xl shadow-none sm:shadow-xl shadow-gray-200/50 flex overflow-hidden min-h-0 sm:ring-1 ring-gray-900/5">
 
         {/* Sidebar */}
-        <div className="w-72 flex flex-col bg-gray-50/50 border-r border-gray-200 shrink-0">
+        <div className={clsx(
+          "flex flex-col bg-gray-50/50 border-r border-gray-200 shrink-0",
+          "w-full md:w-72 md:flex",
+          activeChannel ? "hidden" : "flex"
+        )}>
 
           {/* Brand Header */}
           <div className="h-16 px-6 border-b border-gray-200 flex items-center bg-white shrink-0">
@@ -120,10 +132,23 @@ export default function Chat() {
 
                 if (filtered.length === 0) {
                   return (
-                    <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <Search className="w-8 h-8 text-gray-300 mb-2" />
-                      <p className="text-sm font-semibold text-gray-400">No channels found</p>
-                      <p className="text-xs text-gray-400 mt-1">Try a different search term</p>
+                    <div className="flex flex-col items-center justify-center py-10 text-center animate-in fade-in px-4">
+                      <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-4 border border-gray-100">
+                        <Search className="w-5 h-5 text-gray-400" />
+                      </div>
+                      <p className="text-[13px] font-semibold text-gray-700 mb-1">No channels found</p>
+                      <p className="text-[12px] text-gray-400 mb-6">
+                        {channelSearch ? 'Try a different search term' : 'There are no channels yet.'}
+                      </p>
+                      
+                      {user?.role === 'ADMIN' && (
+                        <button
+                          onClick={() => setIsCreateModalOpen(true)}
+                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-all shadow-sm"
+                        >
+                          <Plus className="w-4 h-4" /> Create a Channel
+                        </button>
+                      )}
                     </div>
                   );
                 }
@@ -167,8 +192,9 @@ export default function Chat() {
                               </div>
                               <div className="py-1">
                                 <button
-                                  onClick={(e) => {
+                                  onMouseDown={(e) => {
                                     e.stopPropagation();
+                                    e.preventDefault();
                                     setOpenChannelMenuId(null);
                                     setActiveChannel(ch.id);
                                     setChannelNameInput(ch.name);
@@ -179,10 +205,32 @@ export default function Chat() {
                                   <Pencil className="w-3.5 h-3.5 text-gray-400" />
                                   Rename
                                 </button>
+                                <button
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    setOpenChannelMenuId(null);
+                                    handleUpdatePrivacy(ch.id, !ch.isPublic);
+                                  }}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                  {ch.isPublic ? (
+                                    <>
+                                      <Lock className="w-3.5 h-3.5 text-gray-400" />
+                                      Make Private
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Unlock className="w-3.5 h-3.5 text-gray-400" />
+                                      Make Public
+                                    </>
+                                  )}
+                                </button>
                                 <div className="h-px bg-gray-100 mx-2 my-1" />
                                 <button
-                                  onClick={(e) => {
+                                  onMouseDown={(e) => {
                                     e.stopPropagation();
+                                    e.preventDefault();
                                     setOpenChannelMenuId(null);
                                     setDeleteConfirmChannelId(ch.id);
                                   }}
@@ -276,12 +324,31 @@ export default function Chat() {
         </div>
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col relative bg-white min-w-0 min-h-0">
-
-          {/* Chat Header */}
-          <div className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6 shrink-0 z-10 shadow-sm shadow-gray-100/50">
+        <div className={clsx(
+          "flex-1 flex flex-col relative bg-white min-w-0 min-h-0",
+          !activeChannel ? "hidden md:flex" : "flex"
+        )}>
+          {!activeChannel ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 animate-in fade-in bg-gray-50/30">
+              <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4 border border-blue-100">
+                <Hash className="w-8 h-8 text-blue-500" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">No Channel Selected</h2>
+              <p className="text-sm text-gray-500 max-w-sm">Select an existing channel from the sidebar or create a new one to start chatting.</p>
+            </div>
+          ) : (
+            <>
+              {/* Chat Header */}
+              <div className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-4 sm:px-6 shrink-0 z-10 shadow-sm shadow-gray-100/50">
             <div className="flex items-center">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 mr-3 shrink-0">
+              <button 
+                onClick={() => setActiveChannel(null)} 
+                className="md:hidden mr-2 p-2 -ml-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Back to channels"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 mr-3 shrink-0">
                 <Hash className="w-4 h-4 text-gray-500" />
               </div>
               <div className="flex flex-col">
@@ -534,6 +601,8 @@ export default function Chat() {
               </div>
             </div>
           )}
+            </>
+          )}
         </div>
 
       </div>
@@ -559,7 +628,7 @@ export default function Chat() {
       <CreateChannelModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onCreate={(name) => handleCreateChannel(name)}
+        onCreate={(name, isPublic) => handleCreateChannel(name, isPublic)}
       />
 
       {/* Delete Channel Confirmation */}

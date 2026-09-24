@@ -79,7 +79,19 @@ export const getMyChannels = async (req: Request, res: Response) => {
 
 export const getChannels = async (req: Request, res: Response) => {
   try {
+    const userRole = req.user?.role;
+    const userId = req.user?.userId;
+
+    // If Admin, see everything. Otherwise, see public channels or channels the user has joined.
+    const whereClause = userRole === 'ADMIN' ? {} : {
+      OR: [
+        { isPublic: true },
+        { members: { some: { userId } } }
+      ]
+    };
+
     const channels = await prisma.channel.findMany({
+      where: whereClause,
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
