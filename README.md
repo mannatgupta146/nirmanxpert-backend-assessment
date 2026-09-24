@@ -2,6 +2,9 @@
 
 A full-stack implementation demonstrating robust RESTful APIs, secure WebSocket communication, Role-Based Access Control (RBAC), and enterprise-grade frontend architecture.
 
+## Live Demo
+- **Frontend (Vercel):** [https://frontend-woad-tau-10.vercel.app](https://frontend-woad-tau-10.vercel.app/)
+- **Backend API (Render):** [https://nirmanxpert-backend-assessment.onrender.com](https://nirmanxpert-backend-assessment.onrender.com/)
 ## Tech Stack
 
 **Backend**
@@ -135,38 +138,23 @@ npm run dev
 
 The application will be available at `http://localhost:5173`.
 
----
 
-## Evaluation Guide (Dual-Window Demo)
 
-To evaluate the real-time syncing and RBAC moderation, follow these steps:
+## Deployment Configuration
 
-1. Open `http://localhost:5173` in a standard browser window and click **Login as Admin**.
-2. Open `http://localhost:5173` in an **Incognito** window and click **Login as Member**.
-3. Type messages in the Member window—watch them instantly appear in the Admin window.
-4. In the Admin window, open the channel settings to rename the channel, or hover over the Member's message to delete it.
-5. Watch the changes dynamically update in both windows in real-time.
-6. Spam the Enter key in the Member window to trigger the Socket.io Redis Rate Limiter notification!
-
----
-
-## Deployment Guide
-
-If you wish to deploy this project live for evaluation, the architecture is fully optimized for Vercel (Frontend) and Render (Backend).
+This project is fully deployed and hosted live. The architecture was optimized and deployed using **Vercel** for the frontend and **Render** for the backend using the following configurations:
 
 ### Backend Deployment (Render)
-1. Create a new **Web Service** on [Render](https://render.com/).
-2. Connect your repository and set the Root Directory to `backend`.
-3. Set the **Build Command** to: `npm install && npm run build`
-   - *(Note: The `build` script in `package.json` automatically runs `npx prisma generate` before TypeScript compilation).*
-4. Set the **Start Command** to: `npm start`
-5. Under Environment Variables, add your MongoDB Atlas URL, JWT Secrets, and an Upstash/Render Redis URL.
+- **Service Type**: Web Service
+- **Root Directory**: `backend`
+- **Build Command**: `npm install && npm run build`
+  - *(The `build` script in `package.json` was customized to run `npx prisma generate` before TypeScript compilation to ensure the Prisma Client is available in the compiled `/dist` directory).*
+- **Start Command**: `npm start` (Maps to `node dist/src/index.js`)
+- **Database & Cache**: Connected securely to MongoDB Atlas and a Redis instance via environment variables.
 
 ### Frontend Deployment (Vercel)
-1. Import your repository into [Vercel](https://vercel.com/).
-2. Set the **Root Directory** to `frontend`.
-3. Vercel will automatically detect Vite and set the build command to `npm run build`.
-4. Under Environment Variables, add:
-   - `VITE_API_URL` (Your Render URL + `/api`)
-   - `VITE_BACKEND_URL` (Your Render URL)
-5. Click **Deploy**.
+- **Framework**: Vite
+- **Root Directory**: `frontend`
+- **Build Command**: `npm run build`
+- **Routing Setup**: A `vercel.json` file was included in the frontend root to rewrite all routes to `/index.html`, ensuring React Router handles SPA navigation without 404s on page reloads.
+- **Environment Variables**: Connected securely to the live Render backend via `VITE_API_URL` and `VITE_BACKEND_URL`.

@@ -3,6 +3,15 @@ import { hashPassword, verifyPassword } from '../utils/hash';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import prisma from '../config/db';
 
+const getCookieOptions = () => {
+  const isProd = process.env.NODE_ENV === 'production' || !process.env.FRONTEND_URL?.includes('localhost');
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' as const : 'lax' as const,
+  };
+};
+
 export const register = async (req: Request, res: Response) => {
   try {
     const { email, password, role } = req.body;
@@ -55,16 +64,12 @@ export const login = async (req: Request, res: Response) => {
     const refreshToken = generateRefreshToken(payload);
 
     res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      ...getCookieOptions(),
       maxAge: 15 * 60 * 1000 // 15 mins
     });
 
     res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      ...getCookieOptions(),
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -87,8 +92,8 @@ export const getMe = async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refreshToken;
 
     if (!userId || !refreshToken) {
-      res.clearCookie('accessToken');
-      res.clearCookie('refreshToken');
+      res.clearCookie('accessToken', getCookieOptions());
+      res.clearCookie('refreshToken', getCookieOptions());
       return res.status(401).json({ error: 'Unauthorized: Missing session tokens' });
     }
 
@@ -112,8 +117,8 @@ export const refresh = async (req: Request, res: Response) => {
   try {
     const token = req.cookies.refreshToken;
     if (!token) {
-      res.clearCookie('accessToken');
-      res.clearCookie('refreshToken');
+      res.clearCookie('accessToken', getCookieOptions());
+      res.clearCookie('refreshToken', getCookieOptions());
       return res.status(401).json({ error: 'Refresh token required' });
     }
 
@@ -122,8 +127,8 @@ export const refresh = async (req: Request, res: Response) => {
       
       const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
       if (!user) {
-        res.clearCookie('accessToken');
-        res.clearCookie('refreshToken');
+        res.clearCookie('accessToken', getCookieOptions());
+        res.clearCookie('refreshToken', getCookieOptions());
         return res.status(401).json({ error: 'User no longer exists' });
       }
 
@@ -131,16 +136,14 @@ export const refresh = async (req: Request, res: Response) => {
       const newAccessToken = generateAccessToken(newPayload);
 
       res.cookie('accessToken', newAccessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        ...getCookieOptions(),
         maxAge: 15 * 60 * 1000 // 15 mins
       });
 
       res.status(200).json({ message: 'Token refreshed' });
     } catch (err) {
-      res.clearCookie('accessToken');
-      res.clearCookie('refreshToken');
+      res.clearCookie('accessToken', getCookieOptions());
+      res.clearCookie('refreshToken', getCookieOptions());
       return res.status(403).json({ error: 'Invalid or expired refresh token' });
     }
   } catch (error) {
@@ -150,7 +153,7 @@ export const refresh = async (req: Request, res: Response) => {
 };
 
 export const logout = async (req: Request, res: Response) => {
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken');
+  res.clearCookie('accessToken', getCookieOptions());
+  res.clearCookie('refreshToken', getCookieOptions());
   res.status(200).json({ message: 'Logged out successfully' });
 };
