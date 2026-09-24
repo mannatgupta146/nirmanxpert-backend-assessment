@@ -4,7 +4,7 @@ import { useLogout } from '../../../auth/hooks/useLogout';
 import { useChat } from '../../hooks/useChat';
 import ManageUsersModal from '../../../admin/ui/components/ManageUsersModal';
 import LeaveChannelModal from '../components/LeaveChannelModal';
-import { LogOut, Hash, Send, Trash2, ShieldAlert, Plus, X, LogIn, LogOut as LeaveIcon, Pencil, Users, UserPlus, Search, ChevronLeft, Lock, Unlock } from 'lucide-react';
+import { LogOut, Hash, Send, Trash2, ShieldAlert, Plus, X, LogIn, DoorOpen, Pencil, Users, UserPlus, Search, ChevronLeft, Lock, Unlock } from 'lucide-react';
 import clsx from 'clsx';
 
 function CreateChannelModal({ isOpen, onClose, onCreate }: { isOpen: boolean, onClose: () => void, onCreate: (name: string, isPublic: boolean) => void }) {
@@ -339,17 +339,19 @@ export default function Chat() {
               {(user?.role === 'ADMIN' || user?.role === 'MODERATOR') && (
                 <button
                   onClick={() => setIsManageModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                  className="flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                  title="Add / Manage Members"
                 >
-                  <UserPlus className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Add / Manage</span><span className="sm:hidden">Add</span>
+                  <UserPlus className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> <span className="hidden sm:inline">Add / Manage</span>
                 </button>
               )}
               {isMember && (
                 <button
                   onClick={() => setIsLeaveModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+                  className="flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+                  title="Leave Channel"
                 >
-                  <LeaveIcon className="w-3.5 h-3.5" /> Leave
+                  <DoorOpen className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> <span className="hidden sm:inline">Leave</span>
                 </button>
               )}
             </div>

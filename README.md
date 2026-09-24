@@ -38,7 +38,8 @@ A full-stack implementation demonstrating robust RESTful APIs, secure WebSocket 
 3. **Community & Channel Management**
    - Create Public or Private (Invite-only) Channels.
    - Private channels are strictly hidden from non-members and require an Admin invite.
-   - Admins can instantly toggle channel privacy (Make Public / Make Private) from the UI.
+   - Admins can instantly manage channels via intuitive inline actions inside the sidebar (Rename, Delete, Toggle Privacy) on both Mobile and Desktop.
+   - Secure Confirmation Modals prevent accidental changes to sensitive channel states (e.g. accidental deletions or privacy toggles).
    - "No Channel" intuitive empty-states for seamless user experience.
 
 4. **Real-Time WebSockets**
